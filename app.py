@@ -15,7 +15,7 @@ except Exception as e:
     st.error(f"Erro ao carregar o arquivo CSV: {e}")
 
 # Criar abas horizontais
-tab1, tab2 = st.tabs(["Principal", "Wiki"])
+tab1, tab2, tab3 = st.tabs(["Principal", "Wiki", "Download"])
 
 # Conteúdo da aba "Principal"
 with tab1:
@@ -172,6 +172,23 @@ with tab2:
         <li><strong>Maior Volume de Atendimentos:</strong> Indica o maior volume de atendimentos registrado no período selecionado.</li>
     </ul>
     """, unsafe_allow_html=True)
+
+# Conteúdo da aba "Download"
+with tab3:
+    st.title("Download da Base de Dados")
+
+    st.markdown("Clique no botão abaixo para baixar a base de dados usada neste dashboard:")
+
+    # Converter o DataFrame filtrado para o formato CSV
+    csv_data = df.to_csv(index=False).encode('utf-8')
+
+    # Botão de download do arquivo CSV
+    st.download_button(
+        label="Baixar o arquivo CSV",
+        data=csv_data,
+        file_name="Report_WhatsApp_2023_2024.csv",
+        mime="text/csv"
+    )
 # Ocultar o menu de opções padrão (ícones de fork, GitHub, Manage app, etc.)
 hide_streamlit_style = """
             <style>
@@ -182,4 +199,3 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
