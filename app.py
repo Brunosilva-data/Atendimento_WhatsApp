@@ -69,25 +69,7 @@ with tab1:
     df_selected.index = df_selected.index.strftime('%b %Y').map(traduzir_mes)
 
     if not df_selected.empty:
-        first_volume = df_selected['Volume de Atendimentos'].iloc[0]
-        last_volume = df_selected['Volume de Atendimentos'].iloc[-1]
-        variation = ((last_volume - first_volume) / first_volume) * 100
-
-        total_por_periodo = df_selected['Volume de Atendimentos'].sum()
-
-        col4, col5, col6 = st.columns(3)
-
-        with col4:
-            st.metric(label="Porcentagem de Variação", value=f"{variation:.2f}%")
-
-        with col5:
-            min_volume = df_selected['Volume de Atendimentos'].min()
-            st.metric(label="Menor Volume de Atendimentos", value=f"{min_volume}")
-
-        with col6:
-            max_volume = df_selected['Volume de Atendimentos'].max()
-            st.metric(label="Maior Volume de Atendimentos", value=f"{max_volume}")
-
+        # Gráfico de área
         fig_area = go.Figure()
 
         fig_area.add_trace(go.Scatter(
@@ -120,8 +102,53 @@ with tab1:
             ),
         )
 
+        # Exibir o gráfico de área no Streamlit
         st.plotly_chart(fig_area, use_container_width=True)
 
+        # --- Gráfico de linha comparativo para todas as operações selecionadas ---
+        fig_line = go.Figure()
+
+        for operacao in opcoes_operacao:
+            df_operacao = df[(df['Papel do criador'] == operacao) & 
+                             (df['Data de abertura'] >= pd.to_datetime(start_date)) & 
+                             (df['Data de abertura'] <= pd.to_datetime(end_date))]
+
+            # Agrupar os dados por mês para cada operação
+            df_operacao_grouped = df_operacao.groupby(pd.Grouper(key='Data de abertura', freq='M')).size()
+
+            if not df_operacao_grouped.empty:
+                fig_line.add_trace(go.Scatter(
+                    x=df_operacao_grouped.index.strftime('%b %Y'),
+                    y=df_operacao_grouped,
+                    mode='lines',
+                    name=operacao,
+                ))
+
+        fig_line.update_layout(
+            title="Comparação de Volume de Atendimentos - Operações",
+            xaxis_title="Mês",
+            yaxis_title="Volume de Atendimentos",
+            plot_bgcolor='rgba(0, 0, 0, 0.1)',
+            paper_bgcolor='rgba(0, 0, 0, 0.1)',
+            font=dict(color="white"),
+            showlegend=True,
+            hovermode="x unified",
+            xaxis=dict(
+                showgrid=True,
+                gridcolor='gray',
+                gridwidth=0.5,
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='gray',
+                gridwidth=0.5,
+            ),
+        )
+
+        # Exibir o gráfico de linha comparativo no Streamlit
+        st.plotly_chart(fig_line, use_container_width=True)
+
+# Conteúdo da aba "Wiki"
 with tab2:
     st.title("Wiki")
 
@@ -145,3 +172,14 @@ with tab2:
         <li><strong>Maior Volume de Atendimentos:</strong> Indica o maior volume de atendimentos registrado no período selecionado.</li>
     </ul>
     """, unsafe_allow_html=True)
+# Ocultar o menu de opções padrão (ícones de fork, GitHub, Manage app, etc.)
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            [data-testid="stDecoration"] {visibility: hidden;}  /* Esconde o botão "Manage app" */
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
